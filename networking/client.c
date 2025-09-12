@@ -1,22 +1,18 @@
-// client.c
-#define _POSIX_C_SOURCE 199309L
+#define _POSIX_C_SOURCE 200809L
 #include "sham.h"
-#include <time.h>
 
-// --- Global Variables & Logging ---
 FILE* log_file = NULL;
+
+// ############## LLM Generated Code Begins ##############
 
 void sham_log(const char* format, ...) {
     if (!log_file) return;
-    
     char time_buffer[30];
     struct timeval tv;
     gettimeofday(&tv, NULL);
     time_t curtime = tv.tv_sec;
     strftime(time_buffer, 30, "%Y-%m-%d %H:%M:%S", localtime(&curtime));
-    
     fprintf(log_file, "[%s.%06ld] [LOG] ", time_buffer, tv.tv_usec);
-    
     va_list args;
     va_start(args, format);
     vfprintf(log_file, format, args);
@@ -25,6 +21,8 @@ void sham_log(const char* format, ...) {
     fflush(log_file);
 }
 
+// ############## LLM Generated Code Ends ##############
+
 void init_logging(const char* filename) {
     if (getenv("RUDP_LOG")) {
         log_file = fopen(filename, "w");
@@ -32,7 +30,6 @@ void init_logging(const char* filename) {
     }
 }
 
-// --- Sliding Window Packet Structure ---
 typedef struct {
     char packet[PACKET_SIZE];
     size_t len;
@@ -41,31 +38,27 @@ typedef struct {
     bool acked;
 } PacketWindowSlot;
 
-// --- File Transfer Logic ---
-void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const char* input_file) {
+void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const char* input_file, const char* output_name_on_server) {
     FILE* file = fopen(input_file, "rb");
-    if (!file) {
-        perror("fopen input_file");
-        return;
-    }
+    if (!file) { perror("fopen input_file"); return; }
+
+    // ############## LLM Generated Code Begins ##############
 
     PacketWindowSlot window[SENDER_WINDOW_SIZE];
     memset(window, 0, sizeof(window));
 
     uint32_t base_seq = 101;
     uint32_t next_seq_num = 101;
-    uint16_t receiver_window = UINT16_MAX; // Assume max window until we get an ACK
+    uint16_t receiver_window = UINT16_MAX;
     bool file_fully_read = false;
 
-    fcntl(sockfd, F_SETFL, O_NONBLOCK); // Set socket to non-blocking
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     while (base_seq < next_seq_num || !file_fully_read) {
-        
-        // --- 1. Send new packets if window allows ---
         while ((next_seq_num - base_seq) < (SENDER_WINDOW_SIZE * PACKET_DATA_SIZE) && 
                (next_seq_num - base_seq) < receiver_window && !file_fully_read) {
             
-            int window_index = (next_seq_num - 101) / PACKET_DATA_SIZE % SENDER_WINDOW_SIZE;
+            int window_index = ((next_seq_num - 101) / PACKET_DATA_SIZE) % SENDER_WINDOW_SIZE;
             
             char* data_ptr = window[window_index].packet + PACKET_HEADER_SIZE;
             size_t bytes_read = fread(data_ptr, 1, PACKET_DATA_SIZE, file);
@@ -87,8 +80,7 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const cha
                 break;
             }
         }
-        
-        // --- 2. Check for incoming ACKs ---
+
         char ack_packet[PACKET_SIZE];
         struct sham_header* ack_header = (struct sham_header*)ack_packet;
         while(recvfrom(sockfd, ack_packet, PACKET_SIZE, 0, NULL, NULL) > 0) {
@@ -103,11 +95,10 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const cha
             }
         }
 
-        // --- 3. Check for timeouts and retransmit ---
         if (base_seq < next_seq_num) {
             struct timeval now;
             gettimeofday(&now, NULL);
-            int window_index = (base_seq - 101) / PACKET_DATA_SIZE % SENDER_WINDOW_SIZE;
+            int window_index = ((base_seq - 101) / PACKET_DATA_SIZE) % SENDER_WINDOW_SIZE;
             
             long time_diff_ms = (now.tv_sec - window[window_index].time_sent.tv_sec) * 1000 + 
                                 (now.tv_usec - window[window_index].time_sent.tv_usec) / 1000;
@@ -116,16 +107,13 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const cha
                 sham_log("TIMEOUT SEQ=%u", window[window_index].seq_num);
                 sendto(sockfd, window[window_index].packet, window[window_index].len, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
                 sham_log("RETX DATA SEQ=%u LEN=%zu", window[window_index].seq_num, window[window_index].len - PACKET_HEADER_SIZE);
-                gettimeofday(&window[window_index].time_sent, NULL); // Reset timer
+                gettimeofday(&window[window_index].time_sent, NULL);
             }
         }
-        struct timespec sleep_time;
-        sleep_time.tv_sec = 0;
-        sleep_time.tv_nsec = 1000 * 1000; // 1000 microseconds = 1 millisecond
+        struct timespec sleep_time = { .tv_sec = 0, .tv_nsec = 1000000 };
         nanosleep(&sleep_time, NULL);
     }
     
-    // --- 4-Way Handshake (Client side) ---
     struct sham_header fin_header = { .seq_num = htonl(next_seq_num), .flags = htons(FLAG_FIN) };
     sendto(sockfd, &fin_header, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
     sham_log("SND FIN SEQ=%u", next_seq_num);
@@ -133,7 +121,6 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const cha
     char packet[PACKET_SIZE];
     struct sham_header* header = (struct sham_header*)packet;
     
-    // Set socket back to blocking for handshake
     int flags = fcntl(sockfd, F_GETFL, 0);
     fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
     
@@ -146,118 +133,183 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const cha
     sendto(sockfd, &final_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
     sham_log("SND ACK=%u", ntohl(header->seq_num) + 1);
 
+    // ############## LLM Generated Code Begins ##############
+
     fclose(file);
 }
 
-// --- Chat Logic ---
-void handle_chat(int sockfd, struct sockaddr_in* server_addr) {
+typedef struct {
+    char packet[PACKET_SIZE];
+    size_t len;
+    uint32_t seq_num;
+    struct timeval time_sent;
+    bool active;
+    bool is_fin;
+} OutgoingPacket;
+
+void handle_chat(int sockfd, struct sockaddr_in* server_addr, float loss_rate) {
     printf("Chat mode activated. Type '/quit' to exit.\n");
     fd_set read_fds;
     char packet[PACKET_SIZE];
     struct sham_header* header = (struct sham_header*)packet;
 
-    // --- Add sequence tracking for chat ---
-    uint32_t client_seq = 101; // Following the handshake
-    uint32_t server_seq = 0; // Will be learned from first message
+    uint32_t client_seq = 101;
+    uint32_t server_seq_latest = 0;
+    bool connection_active = true;
 
-    while(1) {
+    OutgoingPacket outbox = { .active = false, .is_fin = false };
+
+    while(connection_active) {
         FD_ZERO(&read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
         FD_SET(sockfd, &read_fds);
         
-        if (select(sockfd + 1, &read_fds, NULL, NULL, NULL) < 0) {
-            perror("select");
-            break;
-        }
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = RTO_MS * 1000;
+
+        int activity = select(sockfd + 1, &read_fds, NULL, NULL, &timeout);
+        if (activity < 0) { perror("select"); break; }
         
-        // --- Handle keyboard input (Client sends) ---
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
             char buffer[PACKET_DATA_SIZE];
             memset(buffer, 0, sizeof(buffer));
             
-            if (fgets(buffer, sizeof(buffer), stdin) == NULL) break;
+            if (fgets(buffer, sizeof(buffer), stdin) == NULL || outbox.is_fin) continue;
             buffer[strcspn(buffer, "\n")] = '\0';
             
             size_t message_len = strlen(buffer);
-            struct sham_header send_header = { 
-                .seq_num = htonl(client_seq), 
-                .flags = 0 
-            };
+            struct sham_header send_header = { .seq_num = htonl(client_seq), .flags = 0 };
 
             if (strcmp(buffer, "/quit") == 0) {
                 send_header.flags = htons(FLAG_FIN);
+                outbox.is_fin = true;
             }
             
-            memcpy(packet, &send_header, PACKET_HEADER_SIZE);
-            memcpy(packet + PACKET_HEADER_SIZE, buffer, message_len);
+            outbox.len = PACKET_HEADER_SIZE + message_len;
+            memcpy(outbox.packet, &send_header, PACKET_HEADER_SIZE);
+            memcpy(outbox.packet + PACKET_HEADER_SIZE, buffer, message_len);
+            outbox.seq_num = client_seq;
+            outbox.active = true;
+            gettimeofday(&outbox.time_sent, NULL);
             
-            sendto(sockfd, packet, PACKET_HEADER_SIZE + message_len, 0, 
-                   (struct sockaddr*)server_addr, sizeof(*server_addr));
+            sendto(sockfd, outbox.packet, outbox.len, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
             
-            // --- ADD LOGGING ---
-            if (ntohs(send_header.flags) & FLAG_FIN) {
+            if (outbox.is_fin) {
                 sham_log("SND FIN SEQ=%u", client_seq);
-                break;
             } else {
                 sham_log("SND DATA SEQ=%u LEN=%zu", client_seq, message_len);
                 client_seq += message_len;
             }
         }
 
-        // --- Handle network input (Client receives) ---
         if (FD_ISSET(sockfd, &read_fds)) {
             int bytes = recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
-            if (bytes <= (int)PACKET_HEADER_SIZE) continue;
+            if (bytes <= 0) continue;
 
-            server_seq = ntohl(header->seq_num);
+            if (ntohs(header->flags) & FLAG_ACK) {
+                uint32_t ack_num = ntohl(header->ack_num);
+                sham_log("RCV ACK=%u", ack_num);
+                if (outbox.active && ack_num > outbox.seq_num) {
+                    if(outbox.is_fin) {
+                        sham_log("RCV ACK FOR FIN");
+                        connection_active = false;
+                    }
+                    outbox.active = false;
+                }
+                continue;
+            }
+
+            if ((float)rand() / RAND_MAX < loss_rate) {
+                sham_log("DROP DATA SEQ=%u", ntohl(header->seq_num));
+                continue;
+            }
+
+            server_seq_latest = ntohl(header->seq_num);
             size_t message_len = bytes - PACKET_HEADER_SIZE;
 
             if (ntohs(header->flags) & FLAG_FIN) {
-                sham_log("RCV FIN SEQ=%u", server_seq);
-                break;
-            } else if (ntohs(header->flags) & FLAG_ACK) {
-                sham_log("RCV ACK=%u", ntohl(header->ack_num));
-                continue; // It's just an ACK, not data
+                sham_log("RCV FIN SEQ=%u", server_seq_latest);
+                connection_active = false;
+                continue;
             }
             
-            // --- ADD LOGGING ---
-            sham_log("RCV DATA SEQ=%u LEN=%zu", server_seq, message_len);
+            sham_log("RCV DATA SEQ=%u LEN=%zu", server_seq_latest, message_len);
             
             char* message = packet + PACKET_HEADER_SIZE;
             message[message_len] = '\0';
             printf("Friend: %s\n", message);
+            
+            struct sham_header ack_header = { 
+                .ack_num = htonl(server_seq_latest + message_len),
+                .flags = htons(FLAG_ACK),
+                .window_size = htons(RECEIVER_BUFFER_SIZE)
+            };
+            sendto(sockfd, &ack_header, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
+            sham_log("SND ACK=%u WIN=%u", server_seq_latest + message_len, RECEIVER_BUFFER_SIZE);
+        }
+
+        if (outbox.active) {
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            long time_diff_ms = (now.tv_sec - outbox.time_sent.tv_sec) * 1000 + (now.tv_usec - outbox.time_sent.tv_usec) / 1000;
+
+            if (time_diff_ms >= RTO_MS) {
+                sham_log("TIMEOUT SEQ=%u", outbox.seq_num);
+                const char* type = outbox.is_fin ? "FIN" : "DATA";
+                sendto(sockfd, outbox.packet, outbox.len, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
+                sham_log("RETX %s SEQ=%u LEN=%zu", type, outbox.seq_num, outbox.len - PACKET_HEADER_SIZE);
+                gettimeofday(&outbox.time_sent, NULL);
+            }
         }
     }
     
-    // --- Full 4-Way Handshake for Chat ---
-    recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
-    sham_log("RCV ACK FOR FIN");
-    recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
-    sham_log("RCV FIN SEQ=%u", ntohl(header->seq_num));
-
-    struct sham_header final_ack = { .ack_num = htonl(ntohl(header->seq_num) + 1), .flags = htons(FLAG_ACK) };
-    sendto(sockfd, &final_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
-    sham_log("SND ACK=%u", ntohl(header->seq_num) + 1);
+    if (outbox.is_fin) { // We initiated
+        recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
+        server_seq_latest = ntohl(header->seq_num);
+        sham_log("RCV FIN SEQ=%u", server_seq_latest);
+        struct sham_header final_ack = { .ack_num = htonl(server_seq_latest + 1), .flags = htons(FLAG_ACK) };
+        sendto(sockfd, &final_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
+        sham_log("SND ACK=%u", server_seq_latest + 1);
+    } else { // They initiated
+        struct sham_header fin_ack = { .ack_num = htonl(server_seq_latest + 1), .flags = htons(FLAG_ACK) };
+        sendto(sockfd, &fin_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
+        sham_log("SND ACK FOR FIN");
+        struct sham_header our_fin = { .seq_num = htonl(client_seq), .flags = htons(FLAG_FIN) };
+        sendto(sockfd, &our_fin, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
+        sham_log("SND FIN SEQ=%u", client_seq);
+        recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
+        sham_log("RCV ACK=%u", ntohl(header->ack_num));
+    }
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Usage:\n  %s <ip> <port> <in_file> <out_name> [loss]\n", argv[0]);
-        fprintf(stderr, "  %s <ip> <port> --chat [loss]\n", argv[0]);
+    if (argc < 4) {
+        fprintf(stderr, "Usage:\n  %s <ip> <port> <in_file> <out_name> [loss_rate]\n", argv[0]);
+        fprintf(stderr, "  %s <ip> <port> --chat [loss_rate]\n", argv[0]);
         exit(1);
     }
     
     init_logging("client_log.txt");
-    
+    srand(time(NULL));
+
     const char* server_ip = argv[1];
     int port = atoi(argv[2]);
-    bool is_chat_mode = (argc > 3 && strcmp(argv[3], "--chat") == 0);
+    bool is_chat_mode = (strcmp(argv[3], "--chat") == 0);
+    float loss_rate = 0.0;
+    
+    if (is_chat_mode) {
+        if (argc > 4) loss_rate = atof(argv[4]);
+    } else {
+        if (argc < 5) {
+            fprintf(stderr, "File transfer mode requires <input_file> and <output_file_name>\n");
+            exit(1);
+        }
+        if (argc > 5) loss_rate = atof(argv[5]);
+    }
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-        perror("socket");
-        exit(1);
-    }
+    if (sockfd < 0) { perror("socket"); exit(1); }
 
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -269,7 +321,6 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    // --- 3-Way Handshake ---
     struct sham_header syn_header = { .seq_num = htonl(100), .flags = htons(FLAG_SYN) };
     sendto(sockfd, &syn_header, PACKET_HEADER_SIZE, 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
     sham_log("SND SYN SEQ=100");
@@ -290,13 +341,9 @@ int main(int argc, char* argv[]) {
     }
 
     if (is_chat_mode) {
-        handle_chat(sockfd, &server_addr);
+        handle_chat(sockfd, &server_addr, loss_rate);
     } else {
-        if (argc < 5) {
-            fprintf(stderr, "File transfer mode requires <input_file> and <output_file_name>\n");
-            exit(1);
-        }
-        handle_file_transfer(sockfd, &server_addr, argv[3]);
+        handle_file_transfer(sockfd, &server_addr, argv[3], argv[4]);
     }
 
     if(log_file) fclose(log_file);

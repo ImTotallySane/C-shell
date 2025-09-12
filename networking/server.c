@@ -2,17 +2,16 @@
 
 FILE* log_file = NULL;
 
+// ############## LLM Generated Code Begins ##############
+
 void sham_log(const char* format, ...) {
     if (!log_file) return;
-    
     char time_buffer[30];
     struct timeval tv;
     gettimeofday(&tv, NULL);
     time_t curtime = tv.tv_sec;
     strftime(time_buffer, 30, "%Y-%m-%d %H:%M:%S", localtime(&curtime));
-    
     fprintf(log_file, "[%s.%06ld] [LOG] ", time_buffer, tv.tv_usec);
-    
     va_list args;
     va_start(args, format);
     vfprintf(log_file, format, args);
@@ -21,6 +20,8 @@ void sham_log(const char* format, ...) {
     fflush(log_file);
 }
 
+// ############## LLM Generated Code Ends ##############
+
 void init_logging(const char* filename) {
     if (getenv("RUDP_LOG")) {
         log_file = fopen(filename, "w");
@@ -28,29 +29,24 @@ void init_logging(const char* filename) {
     }
 }
 
-// --- MD5 Calculation (Modern EVP API) ---
 void calculate_md5(const char* filepath) {
     unsigned char c[EVP_MAX_MD_SIZE];
     unsigned int md_len;
     FILE *inFile = fopen(filepath, "rb");
     if (inFile == NULL) {
-        printf("%s can't be opened.\n", filepath);
+        printf("MD5 Error: %s can't be opened.\n", filepath);
         return;
     }
-
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     const EVP_MD *md = EVP_md5();
     EVP_DigestInit_ex(mdctx, md, NULL);
-
     int bytes;
     unsigned char data[1024];
     while ((bytes = fread(data, 1, 1024, inFile)) != 0) {
         EVP_DigestUpdate(mdctx, data, bytes);
     }
-    
     EVP_DigestFinal_ex(mdctx, c, &md_len);
     EVP_MD_CTX_free(mdctx);
-    
     printf("MD5: ");
     for(unsigned int i = 0; i < md_len; i++) {
         printf("%02x", c[i]);
@@ -67,11 +63,12 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
         return;
     }
 
-    uint32_t expected_seq = 101; // Following the handshake
+    // ############## LLM Generated Code Begins ##############
+
+    uint32_t expected_seq = 101;
     char packet[PACKET_SIZE];
     struct sham_header* header = (struct sham_header*)packet;
 
-    // Buffer for out-of-order packets
     char ooo_buffer[SENDER_WINDOW_SIZE][PACKET_DATA_SIZE];
     uint32_t ooo_seqs[SENDER_WINDOW_SIZE] = {0};
     size_t ooo_lens[SENDER_WINDOW_SIZE] = {0};
@@ -80,7 +77,9 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
         int bytes_recvd = recvfrom(sockfd, packet, PACKET_SIZE, 0, (struct sockaddr*)client_addr, addr_len);
         if (bytes_recvd < (int)PACKET_HEADER_SIZE) continue;
 
-        if ((float)rand() / RAND_MAX < loss_rate) {
+        uint16_t received_flags_preview = ntohs(((struct sham_header*)packet)->flags);
+        
+        if (!(received_flags_preview & FLAG_FIN) && (float)rand() / RAND_MAX < loss_rate) {
             sham_log("DROP DATA SEQ=%u", ntohl(header->seq_num));
             continue;
         }
@@ -91,7 +90,7 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
 
         if (received_flags & FLAG_FIN) {
             sham_log("RCV FIN SEQ=%u", received_seq);
-            break; // Exit loop to start 4-way handshake
+            break;
         }
         
         sham_log("RCV DATA SEQ=%u LEN=%zu", received_seq, data_len);
@@ -100,7 +99,6 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
             fwrite(packet + PACKET_HEADER_SIZE, 1, data_len, output_file);
             expected_seq += data_len;
 
-            // Check buffer for contiguous packets
             bool advanced;
             do {
                 advanced = false;
@@ -108,7 +106,7 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
                     if (ooo_seqs[i] == expected_seq) {
                         fwrite(ooo_buffer[i], 1, ooo_lens[i], output_file);
                         expected_seq += ooo_lens[i];
-                        ooo_seqs[i] = 0; // Invalidate buffer slot
+                        ooo_seqs[i] = 0;
                         advanced = true;
                         break; 
                     }
@@ -116,18 +114,21 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
             } while (advanced);
 
         } else if (received_seq > expected_seq) {
-            // Buffer out-of-order packet
-            for (int i = 0; i < SENDER_WINDOW_SIZE; i++) {
-                if (ooo_seqs[i] == 0) {
-                    ooo_seqs[i] = received_seq;
-                    ooo_lens[i] = data_len;
-                    memcpy(ooo_buffer[i], packet + PACKET_HEADER_SIZE, data_len);
-                    break;
+            bool already_buffered = false;
+            for(int i = 0; i < SENDER_WINDOW_SIZE; i++) if(ooo_seqs[i] == received_seq) already_buffered = true;
+            
+            if(!already_buffered) {
+                for (int i = 0; i < SENDER_WINDOW_SIZE; i++) {
+                    if (ooo_seqs[i] == 0) {
+                        ooo_seqs[i] = received_seq;
+                        ooo_lens[i] = data_len;
+                        memcpy(ooo_buffer[i], packet + PACKET_HEADER_SIZE, data_len);
+                        break;
+                    }
                 }
             }
         }
         
-        // Send cumulative ACK
         struct sham_header ack_header = {
             .ack_num = htonl(expected_seq),
             .flags = htons(FLAG_ACK),
@@ -140,7 +141,6 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
     fclose(output_file);
     calculate_md5(output_filename);
 
-    // --- 4-Way Handshake (Server side) ---
     struct sham_header fin_ack = { .ack_num = htonl(ntohl(header->seq_num) + 1), .flags = htons(FLAG_ACK) };
     sendto(sockfd, &fin_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
     sham_log("SND ACK FOR FIN");
@@ -151,106 +151,161 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* client_addr, socklen_t
 
     recvfrom(sockfd, packet, PACKET_SIZE, 0, (struct sockaddr*)client_addr, addr_len);
     sham_log("RCV ACK=%u", ntohl(header->ack_num));
+
+    // ############## LLM Generated Code Ends ##############
 }
 
-void handle_chat(int sockfd, struct sockaddr_in* client_addr, socklen_t* addr_len) {
+typedef struct {
+    char packet[PACKET_SIZE];
+    size_t len;
+    uint32_t seq_num;
+    struct timeval time_sent;
+    bool active;
+    bool is_fin;
+} OutgoingPacket;
+
+void handle_chat(int sockfd, struct sockaddr_in* client_addr, socklen_t* addr_len, float loss_rate) {
     printf("Chat mode activated. Type '/quit' to exit.\n");
     fd_set read_fds;
     char packet[PACKET_SIZE];
     struct sham_header* header = (struct sham_header*)packet;
 
-    // --- Add sequence tracking for chat ---
-    uint32_t server_seq = 8500; // An initial sequence number for the server
-    uint32_t client_seq = 0;    // Will be learned from the first message
+    uint32_t server_seq = 8500;
+    uint32_t client_seq_latest = 0;
+    bool connection_active = true;
 
-    while(1) {
+    // ############## LLM Generated Code Begins ##############
+
+    OutgoingPacket outbox = { .active = false, .is_fin = false };
+
+    while(connection_active) {
         FD_ZERO(&read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
         FD_SET(sockfd, &read_fds);
-        
-        if (select(sockfd + 1, &read_fds, NULL, NULL, NULL) < 0) {
-            perror("select");
-            break;
-        }
-        
-        // --- Handle keyboard input (Server sends) ---
+
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = RTO_MS * 1000;
+
+        int activity = select(sockfd + 1, &read_fds, NULL, NULL, &timeout);
+        if (activity < 0) { perror("select"); break; }
+
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
             char buffer[PACKET_DATA_SIZE];
             memset(buffer, 0, sizeof(buffer));
             
-            if (fgets(buffer, sizeof(buffer), stdin) == NULL) break;
+            if (fgets(buffer, sizeof(buffer), stdin) == NULL || outbox.is_fin) continue;
             buffer[strcspn(buffer, "\n")] = '\0';
             
             size_t message_len = strlen(buffer);
-            struct sham_header send_header = { 
-                .seq_num = htonl(server_seq), 
-                .flags = 0 
-            };
+            struct sham_header send_header = { .seq_num = htonl(server_seq), .flags = 0 };
 
             if (strcmp(buffer, "/quit") == 0) {
                 send_header.flags = htons(FLAG_FIN);
+                outbox.is_fin = true;
             }
             
-            memcpy(packet, &send_header, PACKET_HEADER_SIZE);
-            memcpy(packet + PACKET_HEADER_SIZE, buffer, message_len);
-            
-            sendto(sockfd, packet, PACKET_HEADER_SIZE + message_len, 0, 
-                   (struct sockaddr*)client_addr, *addr_len);
+            outbox.len = PACKET_HEADER_SIZE + message_len;
+            memcpy(outbox.packet, &send_header, PACKET_HEADER_SIZE);
+            memcpy(outbox.packet + PACKET_HEADER_SIZE, buffer, message_len);
+            outbox.seq_num = server_seq;
+            outbox.active = true;
+            gettimeofday(&outbox.time_sent, NULL);
 
-            // --- ADD LOGGING ---
-            if (ntohs(send_header.flags) & FLAG_FIN) {
+            sendto(sockfd, outbox.packet, outbox.len, 0, (struct sockaddr*)client_addr, *addr_len);
+
+            if (outbox.is_fin) {
                 sham_log("SND FIN SEQ=%u", server_seq);
-                break;
             } else {
                 sham_log("SND DATA SEQ=%u LEN=%zu", server_seq, message_len);
                 server_seq += message_len;
             }
         }
+    
+    // ############## LLM Generated Code Ends ##############
 
-        // --- Handle network input (Server receives) ---
         if (FD_ISSET(sockfd, &read_fds)) {
             int bytes = recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
-            if (bytes <= (int)PACKET_HEADER_SIZE) continue;
+            if (bytes <= 0) continue;
 
-            client_seq = ntohl(header->seq_num); // Update client sequence number
+            if (ntohs(header->flags) & FLAG_ACK) {
+                uint32_t ack_num = ntohl(header->ack_num);
+                sham_log("RCV ACK=%u", ack_num);
+                if (outbox.active && ack_num > outbox.seq_num) {
+                    if (outbox.is_fin) {
+                        sham_log("RCV ACK FOR FIN");
+                        connection_active = false; // Our FIN is acked, we can exit the loop
+                    }
+                    outbox.active = false;
+                }
+                continue;
+            }
+
+            if ((float)rand() / RAND_MAX < loss_rate) {
+                sham_log("DROP DATA SEQ=%u", ntohl(header->seq_num));
+                continue;
+            }
+
+            client_seq_latest = ntohl(header->seq_num);
             size_t message_len = bytes - PACKET_HEADER_SIZE;
 
             if (ntohs(header->flags) & FLAG_FIN) {
-                sham_log("RCV FIN SEQ=%u", client_seq);
-                break;
+                sham_log("RCV FIN SEQ=%u", client_seq_latest);
+                connection_active = false;
+                continue;
             }
             
-            // --- ADD LOGGING ---
-            sham_log("RCV DATA SEQ=%u LEN=%zu", client_seq, message_len);
+            sham_log("RCV DATA SEQ=%u LEN=%zu", client_seq_latest, message_len);
             
             char* message = packet + PACKET_HEADER_SIZE;
-            message[message_len] = '\0'; // Ensure null termination
+            message[message_len] = '\0';
             printf("Friend: %s\n", message);
 
-            // --- Send ACK for received data ---
             struct sham_header ack_header = { 
-                .ack_num = htonl(client_seq + message_len),
+                .ack_num = htonl(client_seq_latest + message_len),
                 .flags = htons(FLAG_ACK),
                 .window_size = htons(RECEIVER_BUFFER_SIZE)
             };
             sendto(sockfd, &ack_header, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
-            // --- ADD LOGGING ---
-            sham_log("SND ACK=%u WIN=%u", client_seq + message_len, RECEIVER_BUFFER_SIZE);
+            sham_log("SND ACK=%u WIN=%u", client_seq_latest + message_len, RECEIVER_BUFFER_SIZE);
+        }
+
+        if (outbox.active) {
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            long time_diff_ms = (now.tv_sec - outbox.time_sent.tv_sec) * 1000 + (now.tv_usec - outbox.time_sent.tv_usec) / 1000;
+
+            if (time_diff_ms >= RTO_MS) {
+                sham_log("TIMEOUT SEQ=%u", outbox.seq_num);
+                const char* type = outbox.is_fin ? "FIN" : "DATA";
+                sendto(sockfd, outbox.packet, outbox.len, 0, (struct sockaddr*)client_addr, *addr_len);
+                sham_log("RETX %s SEQ=%u LEN=%zu", type, outbox.seq_num, outbox.len - PACKET_HEADER_SIZE);
+                gettimeofday(&outbox.time_sent, NULL);
+            }
         }
     }
-    
-    // --- Full 4-Way Handshake for Chat ---
-    struct sham_header fin_ack = { .ack_num = htonl(client_seq + 1), .flags = htons(FLAG_ACK) };
-    sendto(sockfd, &fin_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
-    sham_log("SND ACK FOR FIN");
-
-    struct sham_header our_fin = { .seq_num = htonl(server_seq), .flags = htons(FLAG_FIN) };
-    sendto(sockfd, &our_fin, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
-    sham_log("SND FIN SEQ=%u", server_seq);
-    
-    recvfrom(sockfd, packet, PACKET_SIZE, 0, (struct sockaddr*)client_addr, addr_len);
-    sham_log("RCV ACK=%u", ntohl(header->ack_num));
+    // ############## LLM Generated Code Begins ##############
+    // Second half of the 4-way handshake
+    if (outbox.is_fin) { // We initiated
+        recvfrom(sockfd, packet, PACKET_SIZE, 0, (struct sockaddr*)client_addr, addr_len);
+        client_seq_latest = ntohl(header->seq_num);
+        sham_log("RCV FIN SEQ=%u", client_seq_latest);
+        struct sham_header final_ack = { .ack_num = htonl(client_seq_latest + 1), .flags = htons(FLAG_ACK) };
+        sendto(sockfd, &final_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
+        sham_log("SND ACK=%u", client_seq_latest + 1);
+    } else { // They initiated
+        struct sham_header fin_ack = { .ack_num = htonl(client_seq_latest + 1), .flags = htons(FLAG_ACK) };
+        sendto(sockfd, &fin_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
+        sham_log("SND ACK FOR FIN");
+        struct sham_header our_fin = { .seq_num = htonl(server_seq), .flags = htons(FLAG_FIN) };
+        sendto(sockfd, &our_fin, PACKET_HEADER_SIZE, 0, (struct sockaddr*)client_addr, *addr_len);
+        sham_log("SND FIN SEQ=%u", server_seq);
+        recvfrom(sockfd, packet, PACKET_SIZE, 0, (struct sockaddr*)client_addr, addr_len);
+        sham_log("RCV ACK=%u", ntohl(header->ack_num));
+    }
 }
+
+// ############## LLM Generated Code ends ##############
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -264,16 +319,18 @@ int main(int argc, char* argv[]) {
     int port = atoi(argv[1]);
     bool is_chat_mode = (argc > 2 && strcmp(argv[2], "--chat") == 0);
     float loss_rate = 0.0;
-    const char* output_filename = "received_file"; // Default, could be made an arg
+    const char* output_filename = "received_file";
 
-    if (!is_chat_mode && argc > 2) loss_rate = atof(argv[2]);
-    if (is_chat_mode && argc > 3) loss_rate = atof(argv[3]);
+    if (is_chat_mode) {
+        if (argc > 3) loss_rate = atof(argv[3]);
+    } else {
+        if (argc > 2 && strcmp(argv[2], "--chat") != 0) {
+            loss_rate = atof(argv[2]);
+        }
+    }
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-        perror("socket");
-        exit(1);
-    }
+    if (sockfd < 0) { perror("socket"); exit(1); }
 
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_len = sizeof(client_addr);
@@ -293,7 +350,6 @@ int main(int argc, char* argv[]) {
     char packet[PACKET_SIZE];
     struct sham_header* header = (struct sham_header*)packet;
 
-    // --- 3-Way Handshake ---
     recvfrom(sockfd, packet, PACKET_SIZE, 0, (struct sockaddr*)&client_addr, &addr_len);
     if (ntohs(header->flags) & FLAG_SYN) {
         sham_log("RCV SYN SEQ=%u", ntohl(header->seq_num));
@@ -315,7 +371,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (is_chat_mode) {
-        handle_chat(sockfd, &client_addr, &addr_len);
+        handle_chat(sockfd, &client_addr, &addr_len, loss_rate);
     } else {
         handle_file_transfer(sockfd, &client_addr, &addr_len, loss_rate, output_filename);
     }
