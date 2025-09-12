@@ -153,8 +153,13 @@ void handle_file_transfer(int sockfd, struct sockaddr_in* server_addr, const cha
 void handle_chat(int sockfd, struct sockaddr_in* server_addr) {
     printf("Chat mode activated. Type '/quit' to exit.\n");
     fd_set read_fds;
-    char buffer[PACKET_DATA_SIZE];
-    
+    char packet[PACKET_SIZE];
+    struct sham_header* header = (struct sham_header*)packet;
+
+    // --- Add sequence tracking for chat ---
+    uint32_t client_seq = 101; // Following the handshake
+    uint32_t server_seq = 0; // Will be learned from first message
+
     while(1) {
         FD_ZERO(&read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
@@ -165,72 +170,74 @@ void handle_chat(int sockfd, struct sockaddr_in* server_addr) {
             break;
         }
         
+        // --- Handle keyboard input (Client sends) ---
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
-            // Clear the buffer first
+            char buffer[PACKET_DATA_SIZE];
             memset(buffer, 0, sizeof(buffer));
             
-            if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
-                break; // EOF or error
-            }
-            
-            // Remove newline character
+            if (fgets(buffer, sizeof(buffer), stdin) == NULL) break;
             buffer[strcspn(buffer, "\n")] = '\0';
             
-            struct sham_header header = { .flags = htons(0) };
+            size_t message_len = strlen(buffer);
+            struct sham_header send_header = { 
+                .seq_num = htonl(client_seq), 
+                .flags = 0 
+            };
+
             if (strcmp(buffer, "/quit") == 0) {
-                header.flags = htons(FLAG_FIN);
+                send_header.flags = htons(FLAG_FIN);
             }
             
-            // Clear the packet buffer completely
-            char packet[PACKET_SIZE];
-            memset(packet, 0, sizeof(packet));
+            memcpy(packet, &send_header, PACKET_HEADER_SIZE);
+            memcpy(packet + PACKET_HEADER_SIZE, buffer, message_len);
             
-            // Copy header and message
-            memcpy(packet, &header, PACKET_HEADER_SIZE);
-            strcpy(packet + PACKET_HEADER_SIZE, buffer);
-            
-            // Send only the necessary bytes (header + string length + null terminator)
-            size_t message_len = strlen(buffer) + 1; // +1 for null terminator
             sendto(sockfd, packet, PACKET_HEADER_SIZE + message_len, 0, 
                    (struct sockaddr*)server_addr, sizeof(*server_addr));
-
-            if(ntohs(header.flags) & FLAG_FIN) break;
+            
+            // --- ADD LOGGING ---
+            if (ntohs(send_header.flags) & FLAG_FIN) {
+                sham_log("SND FIN SEQ=%u", client_seq);
+                break;
+            } else {
+                sham_log("SND DATA SEQ=%u LEN=%zu", client_seq, message_len);
+                client_seq += message_len;
+            }
         }
 
+        // --- Handle network input (Client receives) ---
         if (FD_ISSET(sockfd, &read_fds)) {
-            char packet[PACKET_SIZE];
-            memset(packet, 0, sizeof(packet)); // Clear receive buffer
-            
             int bytes = recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
-            if (bytes > (int)PACKET_HEADER_SIZE) {
-                struct sham_header* header = (struct sham_header*)packet;
-                if(ntohs(header->flags) & FLAG_FIN) break;
-                
-                // Ensure null termination
-                int max_msg_len = bytes - PACKET_HEADER_SIZE;
-                char* message = packet + PACKET_HEADER_SIZE;
-                if (max_msg_len > 0) {
-                    message[max_msg_len - 1] = '\0'; // Force null termination
-                    printf("Friend: %s\n", message);
-                }
+            if (bytes <= (int)PACKET_HEADER_SIZE) continue;
+
+            server_seq = ntohl(header->seq_num);
+            size_t message_len = bytes - PACKET_HEADER_SIZE;
+
+            if (ntohs(header->flags) & FLAG_FIN) {
+                sham_log("RCV FIN SEQ=%u", server_seq);
+                break;
+            } else if (ntohs(header->flags) & FLAG_ACK) {
+                sham_log("RCV ACK=%u", ntohl(header->ack_num));
+                continue; // It's just an ACK, not data
             }
+            
+            // --- ADD LOGGING ---
+            sham_log("RCV DATA SEQ=%u LEN=%zu", server_seq, message_len);
+            
+            char* message = packet + PACKET_HEADER_SIZE;
+            message[message_len] = '\0';
+            printf("Friend: %s\n", message);
         }
     }
     
-    // Simple FIN handshake for chat mode
-    char packet[PACKET_SIZE];
-    struct sham_header* header = (struct sham_header*)packet;
-    
-    // Send ACK for FIN
-    struct sham_header fin_ack = { .flags = htons(FLAG_ACK) };
-    sendto(sockfd, &fin_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
-    
-    // Send our FIN
-    struct sham_header our_fin = { .flags = htons(FLAG_FIN) };
-    sendto(sockfd, &our_fin, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
-    
-    // Wait for final ACK
+    // --- Full 4-Way Handshake for Chat ---
     recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
+    sham_log("RCV ACK FOR FIN");
+    recvfrom(sockfd, packet, PACKET_SIZE, 0, NULL, NULL);
+    sham_log("RCV FIN SEQ=%u", ntohl(header->seq_num));
+
+    struct sham_header final_ack = { .ack_num = htonl(ntohl(header->seq_num) + 1), .flags = htons(FLAG_ACK) };
+    sendto(sockfd, &final_ack, PACKET_HEADER_SIZE, 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
+    sham_log("SND ACK=%u", ntohl(header->seq_num) + 1);
 }
 
 int main(int argc, char* argv[]) {

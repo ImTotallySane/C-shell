@@ -1,33 +1,47 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<unistd.h>
-#include<pwd.h>
+#define _POSIX_C_SOURCE 200809L
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/utsname.h>
+#include <limits.h>
+#include <pwd.h>
+#include "prompt.h"
 
-char homedir[1000];
+extern char SHELL_HOME_DIR[PATH_MAX];
 
-void printprompt()
-    {
-        char* username;
-        char sysname[1000];
-        char cwd[1000];
-        struct passwd* pw=getpwuid(getuid());
-        username=pw->pw_name;
-        gethostname(sysname, 1000);
-        getcwd(cwd, 1000);
-        // printf("%s", cwd);
-        if(strcmp(homedir, cwd)==0)
-            {
-                printf("<%s@%s:~> ", username, sysname);
-            }
-        else if(strncmp(homedir, cwd, strlen(homedir))==0 && cwd[strlen(homedir)]=='/')
-            {
-                char* remaining_dir=cwd+strlen(homedir);
-                printf("<%s@%s:~%s> ", username, sysname, remaining_dir);
-            }
-        else
-            {
-                printf("<%s@%s:%s> ", username, sysname, cwd);
-            }
-       // printf("\n%s", homedir);
+void display_prompt() {
+    
+    char username[LOGIN_NAME_MAX];
+    struct passwd *pw = getpwuid(getuid());
+    strncpy(username, pw->pw_name, sizeof(username) - 1);
+    username[sizeof(username) - 1] = '\0'; // Ensure null-termination
+
+//    ############## LLM Generated Code Begins ##############
+
+    struct utsname sys_info;
+    if (uname(&sys_info) != 0) {
+        strcpy(sys_info.nodename, "system");
     }
+
+//    ############## LLM Generated Code Ends ##############
+    
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        perror("getcwd");
+        return;
+    }
+
+    char display_path[PATH_MAX];
+    if (strncmp(cwd, SHELL_HOME_DIR, strlen(SHELL_HOME_DIR)) == 0) {
+        if (strlen(cwd) == strlen(SHELL_HOME_DIR)) {
+            strcpy(display_path, "~");
+        } else {
+            snprintf(display_path, sizeof(display_path), "~%s", cwd + strlen(SHELL_HOME_DIR));
+        }
+    } else {
+        strcpy(display_path, cwd);
+    }
+
+    printf("<%s@%s:%s> ", username, sys_info.nodename, display_path);
+    fflush(stdout);
+}

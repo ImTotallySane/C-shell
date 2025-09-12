@@ -1,12 +1,9 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include"token.h"
+void init_log();
+void add_to_log(const char *command);
+int should_log_command(const char *command);
+void handle_log_command(char **args);
 
-int load(FILE* ptr, char** commands);
-
-void store(const char* input, char** commands, int command_count);
-
-void print_commands(char** commands, int command_count);
-
-#endif
+#endif // LOG_H
