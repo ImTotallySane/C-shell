@@ -1,0 +1,128 @@
+{
+    "testcase": {
+        "section": "D.2",
+        "description": "Tests the '& ;' operator sequence to ensure one command is backgrounded and the next is run in the foreground.",
+        "cmds": [
+            {
+                "expect_exit": false,
+                "cmd": "sleep 1 & echo foreground now",
+                "sequential_outputs": [
+                    {
+                        "text": "foreground now",
+                        "is_re": false,
+                        "negative_match": false
+                    }
+                ],
+                "nonsequential_outputs": [
+                    {
+                        "text": "\\\\[1\\\\] \\\\d+",
+                        "is_re": true,
+                        "negative_match": false
+                    }
+                ],
+                "ignore_output": false,
+                "cwd_after": null
+            },
+            {
+                "expect_exit": false,
+                "cmd": "sleep 0.9",
+                "sequential_outputs": [],
+                "nonsequential_outputs": [],
+                "ignore_output": true,
+                "cwd_after": null
+            },
+            {
+                "expect_exit": false,
+                "cmd": "echo check cleanup",
+                "sequential_outputs": [
+                    {
+                        "text": "check cleanup",
+                        "is_re": false,
+                        "negative_match": false
+                    }
+                ],
+                "nonsequential_outputs": [
+                    {
+                        "text": "sleep with pid \\\\d+ exited normally",
+                        "is_re": true,
+                        "negative_match": false
+                    }
+                ],
+                "ignore_output": false,
+                "cwd_after": null
+            }
+        ],
+        "timeout": 2.0,
+        "strict_prompt": false,
+        "requires_test_folder": false
+    },
+    "events": [
+        {
+            "time": "2025-11-20T07:54:53.221986+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-20T07:54:53.222126+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, cmd='sleep 1 & echo foreground now', sequential_outputs=[Line(text='foreground now', is_re=False, negative_match=False)], nonsequential_outputs=[Line(text='\\\\\\\\[1\\\\\\\\] \\\\\\\\d+', is_re=True, negative_match=False)], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-20T07:54:53.279881+05:30",
+            "type": "output",
+            "details": "sleep: invalid time interval '&'"
+        },
+        {
+            "time": "2025-11-20T07:54:53.280005+05:30",
+            "type": "output",
+            "details": "sleep: invalid time interval 'echo'"
+        },
+        {
+            "time": "2025-11-20T07:54:53.280073+05:30",
+            "type": "output",
+            "details": "sleep: invalid time interval 'foreground'"
+        },
+        {
+            "time": "2025-11-20T07:54:53.280130+05:30",
+            "type": "output",
+            "details": "sleep: invalid time interval 'now'"
+        },
+        {
+            "time": "2025-11-20T07:54:53.280176+05:30",
+            "type": "output",
+            "details": "Try 'sleep --help' for more information."
+        },
+        {
+            "time": "2025-11-20T07:54:53.280235+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-20T07:54:53.280289+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, cmd='sleep 0.9', sequential_outputs=[], nonsequential_outputs=[], ignore_output=True, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-20T07:54:54.236874+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-20T07:54:54.237026+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, cmd='echo check cleanup', sequential_outputs=[Line(text='check cleanup', is_re=False, negative_match=False)], nonsequential_outputs=[Line(text='sleep with pid \\\\\\\\d+ exited normally', is_re=True, negative_match=False)], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-20T07:54:54.301093+05:30",
+            "type": "output",
+            "details": "check cleanup"
+        },
+        {
+            "time": "2025-11-20T07:54:54.301203+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        }
+    ],
+    "raw_log": "##### START RAW OUTPUT #####\n<osnuser@osntesting:~> sleep 1 & echo foreground now\nsleep: invalid time interval '&'\r\nsleep: invalid time interval 'echo'\r\nsleep: invalid time interval 'foreground'\r\nsleep: invalid time interval 'now'\r\nTry 'sleep --help' for more information.\r\n<osnuser@osntesting:~> sleep 0.9\n<osnuser@osntesting:~> echo check cleanup\ncheck cleanup\r\n<osnuser@osntesting:~> ",
+    "py_log": "2025-11-20 07:54:53,094 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - INFO - Spawned child:\n    <pexpect.pty_spawn.spawn object at 0x78d763704ce0>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_6ca9e884538644c49e36c73c1b2ac184', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmpib2l1eln:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: None\n    match: None\n    match_index: None\n    exitstatus: None\n    flag_eof: False\n    pid: 2672643\n    child_fd: 107\n    closed: False\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x78f014e2be80>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-20 07:54:53,222 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.221986+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-20 07:54:53,222 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.222126+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, cmd='sleep 1 & echo foreground now', sequential_outputs=[Line(text='foreground now', is_re=False, negative_match=False)], nonsequential_outputs=[Line(text='\\\\\\\\\\\\\\\\[1\\\\\\\\\\\\\\\\] \\\\\\\\\\\\\\\\d+', is_re=True, negative_match=False)], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-20 07:54:53,279 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.279881+05:30\",\n        \"type\": \"output\",\n        \"details\": \"sleep: invalid time interval '&'\"\n    }\n2025-11-20 07:54:53,280 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.280005+05:30\",\n        \"type\": \"output\",\n        \"details\": \"sleep: invalid time interval 'echo'\"\n    }\n2025-11-20 07:54:53,280 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.280073+05:30\",\n        \"type\": \"output\",\n        \"details\": \"sleep: invalid time interval 'foreground'\"\n    }\n2025-11-20 07:54:53,280 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.280130+05:30\",\n        \"type\": \"output\",\n        \"details\": \"sleep: invalid time interval 'now'\"\n    }\n2025-11-20 07:54:53,280 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.280176+05:30\",\n        \"type\": \"output\",\n        \"details\": \"Try 'sleep --help' for more information.\"\n    }\n2025-11-20 07:54:53,280 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.280235+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-20 07:54:53,280 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:53.280289+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, cmd='sleep 0.9', sequential_outputs=[], nonsequential_outputs=[], ignore_output=True, cwd_after=None)\"\n    }\n2025-11-20 07:54:54,236 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:54.236874+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-20 07:54:54,237 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:54.237026+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, cmd='echo check cleanup', sequential_outputs=[Line(text='check cleanup', is_re=False, negative_match=False)], nonsequential_outputs=[Line(text='sleep with pid \\\\\\\\\\\\\\\\d+ exited normally', is_re=True, negative_match=False)], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-20 07:54:54,301 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:54.301093+05:30\",\n        \"type\": \"output\",\n        \"details\": \"check cleanup\"\n    }\n2025-11-20 07:54:54,301 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-20T07:54:54.301203+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-20 07:54:57,950 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - INFO - Finished running testcase. Child info at exit:\n    <pexpect.pty_spawn.spawn object at 0x78d763704ce0>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_6ca9e884538644c49e36c73c1b2ac184', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmpib2l1eln:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: '<osnuser@osntesting:~> '\n    match: <re.Match object; span=(0, 23), match='<osnuser@osntesting:~> '>\n    match_index: 0\n    exitstatus: 129\n    flag_eof: False\n    pid: 2672643\n    child_fd: -1\n    closed: True\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x78f014e2be80>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-20 07:54:57,951 - tester.c632fd09-c733-437c-b88a-42ca28fd064f - INFO - Cleaned up temp_dir: /tmp/tmpib2l1eln\n"
+}
