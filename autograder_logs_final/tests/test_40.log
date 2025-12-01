@@ -1,0 +1,80 @@
+{
+    "testcase": {
+        "section": "B.1",
+        "description": "Tests that hop handles an attempt to change directory into a file, which should fail.",
+        "cmds": [
+            {
+                "expect_exit": false,
+                "skip_prompt_check": false,
+                "cmd": "hop test/file4.txt",
+                "sequential_outputs": [
+                    {
+                        "text": "No such directory!",
+                        "is_re": false,
+                        "negative_match": false
+                    }
+                ],
+                "nonsequential_outputs": [],
+                "ignore_output": false,
+                "cwd_after": null
+            },
+            {
+                "expect_exit": false,
+                "skip_prompt_check": false,
+                "cmd": "pwd",
+                "sequential_outputs": [
+                    {
+                        "text": "/app",
+                        "is_re": false,
+                        "negative_match": false
+                    }
+                ],
+                "nonsequential_outputs": [],
+                "ignore_output": false,
+                "cwd_after": null
+            }
+        ],
+        "timeout": 2.0,
+        "strict_prompt": false,
+        "requires_test_folder": true
+    },
+    "events": [
+        {
+            "time": "2025-11-30T05:07:11.078115+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-30T05:07:11.078341+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='hop test/file4.txt', sequential_outputs=[Line(text='No such directory!', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-30T05:07:11.129306+05:30",
+            "type": "output",
+            "details": "hop: No such directory!"
+        },
+        {
+            "time": "2025-11-30T05:07:11.129518+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-30T05:07:11.129617+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='pwd', sequential_outputs=[Line(text='/app', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-30T05:07:11.212977+05:30",
+            "type": "output",
+            "details": "/app"
+        },
+        {
+            "time": "2025-11-30T05:07:11.213661+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        }
+    ],
+    "raw_log": "##### START RAW OUTPUT #####\n<osnuser@osntesting:~> hop test/file4.txt\nhop: No such directory!\r\n<osnuser@osntesting:~> pwd\n/app\r\n<osnuser@osntesting:~> ",
+    "py_log": "2025-11-30 05:07:10,192 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Spawned child:\n    <pexpect.pty_spawn.spawn object at 0x79851ca66db0>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_218079a3a05a4cf382ae1ad921ba804f', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmpwh1siogm:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: None\n    match: None\n    match_index: None\n    exitstatus: None\n    flag_eof: False\n    pid: 1847312\n    child_fd: 208\n    closed: False\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x798518643340>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-30 05:07:11,078 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.078115+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:07:11,078 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.078341+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='hop test/file4.txt', sequential_outputs=[Line(text='No such directory!', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-30 05:07:11,129 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.129306+05:30\",\n        \"type\": \"output\",\n        \"details\": \"hop: No such directory!\"\n    }\n2025-11-30 05:07:11,129 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.129518+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:07:11,129 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.129617+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='pwd', sequential_outputs=[Line(text='/app', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-30 05:07:11,213 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.212977+05:30\",\n        \"type\": \"output\",\n        \"details\": \"/app\"\n    }\n2025-11-30 05:07:11,213 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:07:11.213661+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:07:11,753 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - WARNING - Failed to remove container tester_218079a3a05a4cf382ae1ad921ba804f: 409 Client Error for http+docker://localhost/v1.51/containers/8664fed84d9b44d3292f814d94bc852aa1710c3f67b15406648eff7a0999c496?v=False&link=False&force=True: Conflict (\"removal of container 8664fed84d9b44d3292f814d94bc852aa1710c3f67b15406648eff7a0999c496 is already in progress\")\n2025-11-30 05:07:11,754 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Finished running testcase. Child info at exit:\n    <pexpect.pty_spawn.spawn object at 0x79851ca66db0>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_218079a3a05a4cf382ae1ad921ba804f', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmpwh1siogm:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: '<osnuser@osntesting:~> '\n    match: <re.Match object; span=(0, 23), match='<osnuser@osntesting:~> '>\n    match_index: 0\n    exitstatus: None\n    flag_eof: False\n    pid: 1847312\n    child_fd: -1\n    closed: True\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x798518643340>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-30 05:07:11,754 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Cleaned up temp_dir: /tmp/tmpwh1siogm\n"
+}

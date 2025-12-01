@@ -1,0 +1,14 @@
+{
+    "test_id": "test_123",
+    "section": "E.4",
+    "description": "Tests that 'fg' brings a background job to the foreground and waits for it.",
+    "passed": false,
+    "failure": {
+        "step_index": 0,
+        "command": "sleep 1 &",
+        "reason": "Missing required non-sequential output: '\\\\[1\\\\] \\\\d+'",
+        "expected": null,
+        "actual": "[28] 28"
+    },
+    "score": 0.0
+}

@@ -1,0 +1,50 @@
+{
+    "testcase": {
+        "section": "A.3",
+        "description": "Tests for 'Invalid Syntax!' with empty commands between semicolons.",
+        "cmds": [
+            {
+                "expect_exit": false,
+                "skip_prompt_check": false,
+                "cmd": "a ; ; b",
+                "sequential_outputs": [
+                    {
+                        "text": "Invalid Syntax!",
+                        "is_re": false,
+                        "negative_match": false
+                    }
+                ],
+                "nonsequential_outputs": [],
+                "ignore_output": false,
+                "cwd_after": null
+            }
+        ],
+        "timeout": 2.0,
+        "strict_prompt": false,
+        "requires_test_folder": false
+    },
+    "events": [
+        {
+            "time": "2025-11-30T05:06:41.604858+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-30T05:06:41.605146+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='a ; ; b', sequential_outputs=[Line(text='Invalid Syntax!', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-30T05:06:41.656411+05:30",
+            "type": "output",
+            "details": "Invalid Syntax!"
+        },
+        {
+            "time": "2025-11-30T05:06:41.656712+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        }
+    ],
+    "raw_log": "##### START RAW OUTPUT #####\n<osnuser@osntesting:~> a ; ; b\nInvalid Syntax!\r\n<osnuser@osntesting:~> ",
+    "py_log": "2025-11-30 05:06:40,596 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Spawned child:\n    <pexpect.pty_spawn.spawn object at 0x7985180e1100>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_de1ea67d51f74573835051412124c562', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmpcxrnwlhb:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: None\n    match: None\n    match_index: None\n    exitstatus: None\n    flag_eof: False\n    pid: 1822141\n    child_fd: 185\n    closed: False\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x798518642440>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-30 05:06:41,604 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:06:41.604858+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:06:41,605 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:06:41.605146+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='a ; ; b', sequential_outputs=[Line(text='Invalid Syntax!', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-30 05:06:41,656 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:06:41.656411+05:30\",\n        \"type\": \"output\",\n        \"details\": \"Invalid Syntax!\"\n    }\n2025-11-30 05:06:41,656 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:06:41.656712+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:06:41,963 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Finished running testcase. Child info at exit:\n    <pexpect.pty_spawn.spawn object at 0x7985180e1100>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_de1ea67d51f74573835051412124c562', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmpcxrnwlhb:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: '<osnuser@osntesting:~> '\n    match: <re.Match object; span=(0, 23), match='<osnuser@osntesting:~> '>\n    match_index: 0\n    exitstatus: 129\n    flag_eof: False\n    pid: 1822141\n    child_fd: -1\n    closed: True\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x798518642440>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-30 05:06:41,964 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Cleaned up temp_dir: /tmp/tmpcxrnwlhb\n"
+}

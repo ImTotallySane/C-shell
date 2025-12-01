@@ -1,0 +1,98 @@
+{
+    "testcase": {
+        "section": "C.3",
+        "description": "Tests that '>>' appends to a file rather than overwriting it.",
+        "cmds": [
+            {
+                "expect_exit": false,
+                "skip_prompt_check": false,
+                "cmd": "echo first line > test/file4.txt",
+                "sequential_outputs": [],
+                "nonsequential_outputs": [],
+                "ignore_output": false,
+                "cwd_after": null
+            },
+            {
+                "expect_exit": false,
+                "skip_prompt_check": false,
+                "cmd": "echo appended line >> test/file4.txt",
+                "sequential_outputs": [],
+                "nonsequential_outputs": [],
+                "ignore_output": false,
+                "cwd_after": null
+            },
+            {
+                "expect_exit": false,
+                "skip_prompt_check": false,
+                "cmd": "cat test/file4.txt",
+                "sequential_outputs": [
+                    {
+                        "text": "first line",
+                        "is_re": false,
+                        "negative_match": false
+                    },
+                    {
+                        "text": "appended line",
+                        "is_re": false,
+                        "negative_match": false
+                    }
+                ],
+                "nonsequential_outputs": [],
+                "ignore_output": false,
+                "cwd_after": null
+            }
+        ],
+        "timeout": 2.0,
+        "strict_prompt": false,
+        "requires_test_folder": true
+    },
+    "events": [
+        {
+            "time": "2025-11-30T05:08:13.515569+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-30T05:08:13.515918+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='echo first line > test/file4.txt', sequential_outputs=[], nonsequential_outputs=[], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-30T05:08:13.569251+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-30T05:08:13.569552+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='echo appended line >> test/file4.txt', sequential_outputs=[], nonsequential_outputs=[], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-30T05:08:13.624582+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        },
+        {
+            "time": "2025-11-30T05:08:13.625108+05:30",
+            "type": "input",
+            "details": "GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='cat test/file4.txt', sequential_outputs=[Line(text='first line', is_re=False, negative_match=False), Line(text='appended line', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)"
+        },
+        {
+            "time": "2025-11-30T05:08:13.678874+05:30",
+            "type": "output",
+            "details": "first line"
+        },
+        {
+            "time": "2025-11-30T05:08:13.679321+05:30",
+            "type": "output",
+            "details": "appended line"
+        },
+        {
+            "time": "2025-11-30T05:08:13.679589+05:30",
+            "type": "output",
+            "details": "<osnuser@osntesting:~> "
+        }
+    ],
+    "raw_log": "##### START RAW OUTPUT #####\n<osnuser@osntesting:~> echo first line > test/file4.txt\n<osnuser@osntesting:~> echo appended line >> test/file4.txt\n<osnuser@osntesting:~> cat test/file4.txt\nfirst line\r\nappended line\r\n<osnuser@osntesting:~> ",
+    "py_log": "2025-11-30 05:08:12,533 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Spawned child:\n    <pexpect.pty_spawn.spawn object at 0x7984fa9f3830>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_b48a3650c348422cb1e919a49b995f22', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmp0rzs65ow:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: None\n    match: None\n    match_index: None\n    exitstatus: None\n    flag_eof: False\n    pid: 1897263\n    child_fd: 211\n    closed: False\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x798518642f80>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-30 05:08:13,515 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.515569+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:08:13,515 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.515918+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='echo first line > test/file4.txt', sequential_outputs=[], nonsequential_outputs=[], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-30 05:08:13,569 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.569251+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:08:13,569 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.569552+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='echo appended line >> test/file4.txt', sequential_outputs=[], nonsequential_outputs=[], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-30 05:08:13,624 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.624582+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:08:13,625 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.625108+05:30\",\n        \"type\": \"input\",\n        \"details\": \"GenericCmd(expect_exit=False, skip_prompt_check=False, cmd='cat test/file4.txt', sequential_outputs=[Line(text='first line', is_re=False, negative_match=False), Line(text='appended line', is_re=False, negative_match=False)], nonsequential_outputs=[], ignore_output=False, cwd_after=None)\"\n    }\n2025-11-30 05:08:13,679 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.678874+05:30\",\n        \"type\": \"output\",\n        \"details\": \"first line\"\n    }\n2025-11-30 05:08:13,679 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.679321+05:30\",\n        \"type\": \"output\",\n        \"details\": \"appended line\"\n    }\n2025-11-30 05:08:13,679 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - DEBUG - Received event:\n    {\n        \"time\": \"2025-11-30T05:08:13.679589+05:30\",\n        \"type\": \"output\",\n        \"details\": \"<osnuser@osntesting:~> \"\n    }\n2025-11-30 05:08:14,232 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Finished running testcase. Child info at exit:\n    <pexpect.pty_spawn.spawn object at 0x7984fa9f3830>\n    command: /usr/bin/docker\n    args: [b'/usr/bin/docker', b'run', b'--name', b'tester_b48a3650c348422cb1e919a49b995f22', b'-i', b'-t', b'--rm', b'--init', b'-h', b'osntesting', b'-v', b'/tmp/tmp0rzs65ow:/app', b'-w', b'/app', b'shell_tester:latest', b'/app/shell.out']\n    buffer (last 100 chars): ''\n    before (last 100 chars): ''\n    after: '<osnuser@osntesting:~> '\n    match: <re.Match object; span=(0, 23), match='<osnuser@osntesting:~> '>\n    match_index: 0\n    exitstatus: None\n    flag_eof: False\n    pid: 1897263\n    child_fd: -1\n    closed: True\n    timeout: 2.0\n    delimiter: <class 'pexpect.exceptions.EOF'>\n    logfile: <tester.FlexibleIO object at 0x798518642f80>\n    logfile_read: None\n    logfile_send: None\n    maxread: 2000\n    ignorecase: False\n    searchwindowsize: None\n    delaybeforesend: 0.05\n    delayafterclose: 0.1\n    delayafterterminate: 0.1\n2025-11-30 05:08:14,233 - tester.068733b1-c3b9-409f-bea5-db2e98589a79 - INFO - Cleaned up temp_dir: /tmp/tmp0rzs65ow\n"
+}
