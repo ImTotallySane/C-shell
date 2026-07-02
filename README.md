@@ -12,7 +12,6 @@ A modular, POSIX-compliant custom shell implementation in C. Built using the POS
    - [Persistent Command Logging](#persistent-command-logging)
 2. [Codebase Architecture](#codebase-architecture)
 3. [Compilation and Setup](#compilation-and-setup)
-4. [Example Usage](#example-usage)
 
 ---
 
